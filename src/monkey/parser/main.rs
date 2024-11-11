@@ -196,7 +196,7 @@ impl<I: TokenIterator> Parser<I> {
                 | Token::Eq
                 | Token::Neq
                 | Token::Lt
-                | Token::Gt 
+                | Token::Gt
                 | Token::Percent => {
                     let precedence = self.current_precedence();
                     let token = self.tokens.next().unwrap();

@@ -33,6 +33,7 @@ pub enum Op {
     Closure = 0x1B,
     GetFree = 0x1C,
     CurrentClosure = 0x1D,
+    Mod = 0x1E,
 }
 
 impl From<u8> for Op {
@@ -68,6 +69,7 @@ impl From<u8> for Op {
             0x1B => Op::Closure,
             0x1C => Op::GetFree,
             0x1D => Op::CurrentClosure,
+            0x1E => Op::Mod,
             _ => panic!("Opcode not found"),
         }
     }
@@ -180,6 +182,7 @@ impl Display for Instruction {
             ),
             Op::GetFree => write!(f, "GET_FREE {}", u8::from_be_bytes([self.param[0]])),
             Op::CurrentClosure => write!(f, "CURRENT_CLOSURE"),
+            Op::Mod => write!(f, "MOD"),
         }
     }
 }

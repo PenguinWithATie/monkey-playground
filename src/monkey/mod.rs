@@ -1,6 +1,6 @@
 pub mod evaluator;
-pub mod vm;
 mod lexer;
 mod parser;
+pub mod vm;
 pub use lexer::Lexer;
 pub use parser::{Parser, Program};

@@ -1,13 +1,15 @@
+use crate::monkey::parser::Fn;
 use crate::monkey::{
     lexer::Token,
     parser::{Block, Expr, Program},
 };
-use std::cell::RefCell;
 use std::collections::HashMap;
 use std::fmt::Display;
 use std::iter::zip;
 use std::rc::Rc;
 use std::str::FromStr;
+use std::{cell::RefCell, fmt::Write};
+use Primitive::*;
 
 #[derive(Clone, Debug, PartialEq)]
 pub enum Builtin {
@@ -47,7 +49,7 @@ impl Display for Builtin {
     }
 }
 impl Builtin {
-    fn eval(self, args: &[Binding]) -> Result<Binding, &'static str> {
+    fn eval(self, args: &[Binding], stdout: &Rc<RefCell<String>>) -> Result<Binding, &'static str> {
         match self {
             Builtin::Len => match args {
                 [Binding::Primitive(String_(s))] => Ok(Binding::Primitive(Int(s.len() as i64))),
@@ -89,7 +91,10 @@ impl Builtin {
             },
             Builtin::Puts => {
                 for arg in args {
-                    logging::log!("{}", arg);
+                    stdout
+                        .borrow_mut()
+                        .write_fmt(format_args!("{}\n", arg))
+                        .unwrap();
                 }
                 Ok(Binding::Null)
             }
@@ -114,9 +119,6 @@ impl Display for Primitive {
     }
 }
 
-use crate::monkey::parser::Fn;
-use leptos::logging;
-use Primitive::*;
 #[derive(Debug, Clone)]
 pub enum Binding {
     Primitive(Primitive),
@@ -134,6 +136,7 @@ pub trait Evaluation {
 }
 #[derive(Debug)]
 pub struct Env {
+    pub stdout: Rc<RefCell<String>>,
     pub local: RefCell<HashMap<String, Binding>>,
     pub enclosing: Option<Rc<Env>>,
 }
@@ -144,6 +147,7 @@ impl Env {
         Self {
             local: RefCell::new(HashMap::new()),
             enclosing,
+            stdout: Rc::new(RefCell::new(String::new())),
         }
     }
     pub fn get(&self, name: &str) -> Option<Binding> {
@@ -212,6 +216,11 @@ impl Evaluation for Expr {
             Expr::Prefix(p) => match p.token {
                 Token::Bang => {
                     let operand = p.right.eval(env)?;
+                    let operand = if let Binding::Return(l) = operand {
+                        *l
+                    } else {
+                        operand
+                    };
                     match operand {
                         Binding::Primitive(Int(i)) => Ok(Binding::Primitive(Bool(i == 0))),
                         Binding::Primitive(Bool(b)) => Ok(Binding::Primitive(Bool(!b))),
@@ -220,6 +229,11 @@ impl Evaluation for Expr {
                 }
                 Token::Minus => {
                     let operand = p.right.eval(env)?;
+                    let operand = if let Binding::Return(l) = operand {
+                        *l
+                    } else {
+                        operand
+                    };
                     match operand {
                         Binding::Primitive(Int(i)) => Ok(Binding::Primitive(Int(-i))),
                         _ => Err("Expected int for - operator"),
@@ -229,7 +243,17 @@ impl Evaluation for Expr {
             },
             Expr::Infix(i) => {
                 let left = i.left.eval(env)?;
+                let left = if let Binding::Return(l) = left {
+                    *l
+                } else {
+                    left
+                };
                 let right = i.right.eval(env)?;
+                let right = if let Binding::Return(l) = right {
+                    *l
+                } else {
+                    right
+                };
                 match (left, right) {
                     (Binding::Primitive(Int(l)), Binding::Primitive(Int(r))) => match i.token {
                         Token::Plus => Ok(Binding::Primitive(Int(l + r))),
@@ -280,7 +304,6 @@ impl Evaluation for Expr {
             }
             Expr::If(i) => {
                 let condition = i.condition.eval(env)?;
-                logging::log!("condition: {:?}", condition);
                 match condition {
                     Binding::Primitive(Bool(true)) | Binding::Primitive(Int(_)) => {
                         i.consequence.eval(env)
@@ -302,13 +325,14 @@ impl Evaluation for Expr {
                     let fn_env = Env {
                         local: fn_env.local.clone(),
                         enclosing: Some(env.clone()),
+                        stdout: fn_env.stdout.clone(),
                     };
                     zip(fn_.args.clone(), args).for_each(|(name, arg)| {
                         fn_env.local.borrow_mut().insert(name, arg);
                     });
                     fn_.body.eval(&Rc::new(fn_env))
                 } else if let Binding::Builtin(builtin) = fn_ {
-                    builtin.eval(args.as_slice())
+                    builtin.eval(args.as_slice(), &env.stdout)
                 } else {
                     Err("Expected function literal or identifier")
                 }

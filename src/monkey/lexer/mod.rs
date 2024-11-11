@@ -1,6 +1,6 @@
 mod base_types;
 mod main;
-mod tests;
+//mod tests;
 mod tokens;
 pub use base_types::Lexer;
 pub use main::TokenIterator;

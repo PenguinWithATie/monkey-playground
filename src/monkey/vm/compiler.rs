@@ -202,6 +202,7 @@ impl CompiledContext {
             Token::Neq => Op::Neq,
             Token::Lt => Op::Lt,
             Token::LBracket => Op::Index,
+            Token::Percent => Op::Mod,
             _ => panic!("Invalid infix token"),
         }));
     }
@@ -321,13 +322,14 @@ impl Compilation for Expr {
                 | Token::Slash
                 | Token::Eq
                 | Token::Neq
-                | Token::Gt
-                | Token::LBracket => {
+                | Token::Lt
+                | Token::LBracket
+                | Token::Percent => {
                     i.left.compile(out);
                     i.right.compile(out);
                     out.emit_infix(&i.token);
                 }
-                Token::Lt => {
+                Token::Gt => {
                     i.right.compile(out);
                     i.left.compile(out);
                     out.emit(Instruction::new(Op::Lt));

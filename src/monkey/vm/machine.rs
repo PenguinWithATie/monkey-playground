@@ -1,6 +1,9 @@
 use super::types::{Binding, Builtin, Closure, Primitive};
 use crate::monkey::vm::types::Op;
-use std::collections::{HashMap, VecDeque};
+use std::{
+    collections::{HashMap, VecDeque},
+    fmt::Write,
+};
 
 #[derive(Debug)]
 struct Frame {
@@ -45,15 +48,17 @@ pub struct Machine {
     sp: usize,
     globals: Vec<Binding>,
     frames: Vec<Frame>,
+    stdout: String,
 }
 
 impl Default for Machine {
     fn default() -> Self {
         Self {
             sp: 0,
-            stack: vec![Binding::Null; 4096],
+            stack: vec![Binding::Null; u16::MAX as usize],
             globals: vec![Binding::Null; u16::MAX as usize],
             frames: Vec::new(),
+            stdout: String::new(),
         }
     }
 }
@@ -71,7 +76,15 @@ impl Machine {
             }
             let op = Op::from(self.frame().next());
             match op {
-                Op::Add | Op::Sub | Op::Mul | Op::Div | Op::Eq | Op::Neq | Op::Lt | Op::Index => {
+                Op::Add
+                | Op::Sub
+                | Op::Mul
+                | Op::Div
+                | Op::Eq
+                | Op::Neq
+                | Op::Lt
+                | Op::Index
+                | Op::Mod => {
                     self.binary_op(op);
                 }
                 Op::Bang => {
@@ -262,20 +275,24 @@ impl Machine {
     fn frame(&mut self) -> &mut Frame {
         self.frames.last_mut().unwrap()
     }
+    pub fn get_stdout(&self) -> String {
+        self.stdout.clone()
+    }
 
     fn binary_op(&mut self, op: Op) {
-        let left = self.pop().clone();
         let right = self.pop().clone();
+        let left = self.pop().clone();
         match (left, right) {
             (Binding::Primitive(left), Binding::Primitive(right)) => match (left, right) {
                 (Primitive::Int(l), Primitive::Int(r)) => match op {
                     Op::Add => self.push(Primitive::Int(l + r).into()),
-                    Op::Sub => self.push(Primitive::Int(r - l).into()),
+                    Op::Sub => self.push(Primitive::Int(l - r).into()),
                     Op::Mul => self.push(Primitive::Int(l * r).into()),
                     Op::Div => self.push(Primitive::Int(l / r).into()),
                     Op::Eq => self.push(Primitive::Bool(l == r).into()),
                     Op::Neq => self.push(Primitive::Bool(l != r).into()),
                     Op::Lt => self.push(Primitive::Bool(l < r).into()),
+                    Op::Mod => self.push(Primitive::Int(l % r).into()),
                     _ => panic!("Invalid op for ints"),
                 },
                 (Primitive::Bool(l), Primitive::Bool(r)) => match op {
@@ -395,11 +412,9 @@ impl Machine {
                 }
             }
             Builtin::Puts => {
-                if args.len() != 1 {
-                    panic!("Expected single argument for puts builtin");
+                while let Some(arg) = args.pop() {
+                    self.stdout.write_fmt(format_args!("{}\n", arg)).unwrap();
                 }
-                let arg = args.pop().unwrap();
-                println!("{}", arg);
                 self.push(Binding::Null);
             }
         }
