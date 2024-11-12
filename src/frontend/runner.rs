@@ -1,20 +1,13 @@
-use std::rc::Rc;
-
-use super::{EngineType, RunResult};
+use super::utils::{bytecode_engine, eval_engine, generate_program, RunResult};
+use super::EngineType;
 use crate::frontend::EngineSelector;
-use crate::monkey::evaluator::{Env, Evaluation};
-use crate::monkey::vm::{Compilation, CompiledContext, Machine};
-use crate::monkey::{Lexer, Parser, Program};
-use chrono::Local;
 use leptos::prelude::*;
-
 #[component]
 pub fn Runner(
     text: ReadSignal<String>,
     set_text: WriteSignal<String>,
     engine_type: RwSignal<EngineType>,
 ) -> impl IntoView {
-    //let (text, set_text) = signal::<String>(FIB_CODE.to_string());
     let vm = RwSignal::new(RunResult::default());
     let eval = RwSignal::new(RunResult::default());
     let parse_time = RwSignal::new(0);
@@ -33,11 +26,11 @@ pub fn Runner(
                         let (program, timer) = generate_program(text());
                         parse_time.set(timer);
                         if matches!(engine_type(), EngineType::Both | EngineType::VM) {
-                            let result = monkey_bytecode_engine(&program);
+                            let result = bytecode_engine(&program);
                             vm.set(result);
                         }
                         if matches!(engine_type(), EngineType::Both | EngineType::Evaluator) {
-                            let result = monkey_eval_engine(&program);
+                            let result = eval_engine(&program);
                             eval.set(result);
                         }
                     }
@@ -68,36 +61,5 @@ pub fn Runner(
                 </Show>
             </div>
         </div>
-    }
-}
-
-fn generate_program(text: String) -> (Program, i64) {
-    let timer = Local::now();
-    let lexer = Lexer::new(text.bytes());
-    let mut parser = Parser::new(lexer);
-    let timer = (Local::now() - timer).num_milliseconds();
-    (parser.program().unwrap(), timer)
-}
-fn monkey_eval_engine(program: &Program) -> RunResult {
-    let env = Rc::new(Env::default());
-    let timer = Local::now();
-    let _ = program.eval(&env).unwrap();
-    let timer = (Local::now() - timer).num_milliseconds();
-    RunResult {
-        result: format!("{}", env.stdout.borrow()),
-        time: timer,
-    }
-}
-
-fn monkey_bytecode_engine(program: &Program) -> RunResult {
-    let mut ctx = CompiledContext::default();
-    let mut machine = Machine::default();
-    let timer = Local::now();
-    program.compile(&mut ctx);
-    machine.run(ctx.get_constants(), ctx.make_main_closure());
-    let timer = (Local::now() - timer).num_milliseconds();
-    RunResult {
-        result: machine.get_stdout(),
-        time: timer,
     }
 }

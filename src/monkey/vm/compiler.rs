@@ -155,6 +155,13 @@ impl CompiledContext {
     pub fn get_constants(&self) -> Vec<Primitive> {
         self.constants.clone()
     }
+    pub fn remove_last_pop(&mut self) {
+        if let Some(last) = self.scopes.last() {
+            if last.instructions.last().unwrap().op == Op::Pop {
+                self.scopes.last_mut().unwrap().instructions.pop();
+            }
+        }
+    }
     pub fn clear_instructions(&mut self) {
         if let Some(scope) = self.scopes.last_mut() {
             scope.instructions.clear();
@@ -245,7 +252,7 @@ impl Compilation for Block {
     fn compile(&self, out: &mut CompiledContext) {
         for s in &self.0 {
             s.compile(out);
-            if !matches!(s, Expr::Let(_) | Expr::Return(_)) {
+            if !matches!(s, Expr::Return(_)) {
                 out.emit(Instruction::new(Op::Pop));
             }
         }
@@ -256,7 +263,7 @@ impl Compilation for Program {
     fn compile(&self, out: &mut CompiledContext) {
         for s in &self.statements {
             s.compile(out);
-            if !matches!(s, Expr::Let(_) | Expr::Return(_)) {
+            if !matches!(s, Expr::Return(_)) {
                 out.emit(Instruction::new(Op::Pop));
             }
         }

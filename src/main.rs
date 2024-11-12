@@ -1,7 +1,7 @@
 use leptos::prelude::*;
 mod frontend;
 mod monkey;
-use frontend::{EngineType, EvalMode, ModeSelector, Runner, SnippetSetter, FIB_CODE};
+use frontend::{EngineType, EvalMode, ModeSelector, Repl, Runner, SnippetSetter, FIB_CODE};
 
 fn main() {
     console_error_panic_hook::set_once();
@@ -16,8 +16,15 @@ fn App() -> impl IntoView {
     view! {
         <div class="m-4 flex gap-2">
             <ModeSelector mode />
-            <SnippetSetter set_text />
+            <Show when=move || mode() == EvalMode::Runner>
+                <SnippetSetter set_text />
+            </Show>
         </div>
-        <Runner text set_text engine_type />
+        <Show when=move || mode() == EvalMode::Runner>
+            <Runner text set_text engine_type />
+        </Show>
+        <Show when=move || mode() == EvalMode::Repl>
+            <Repl engine_type />
+        </Show>
     }
 }

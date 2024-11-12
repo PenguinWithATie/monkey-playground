@@ -278,7 +278,13 @@ impl Machine {
     pub fn get_stdout(&self) -> String {
         self.stdout.clone()
     }
-
+    pub fn get_last_expr(&mut self) -> Binding {
+        match self.sp {
+            0 => Binding::Null,
+            1 => self.pop().clone(),
+            _ => panic!("Expected only one expression on stack"),
+        }
+    }
     fn binary_op(&mut self, op: Op) {
         let right = self.pop().clone();
         let left = self.pop().clone();
