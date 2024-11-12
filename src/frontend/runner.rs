@@ -12,16 +12,16 @@ pub fn Runner(
     let eval = RwSignal::new(RunResult::default());
     let parse_time = RwSignal::new(0);
     view! {
-        <div class="flex h-screen m-4 gap-2">
+        <div class="flex gap-2 m-4 h-screen">
             <div class="flex flex-col h-full">
                 <textarea
                     prop:value=text
                     on:input=move |ev| { set_text(event_target_value(&ev)) }
-                    cols=80
-                    class="h-4/5 font-mono"
+                    cols=65
+                    class="h-3/5 font-mono bg-gray-100"
                 />
                 <button
-                    class="m-2 bg-orange-600 hover:bg-orange-800 text-white font-bold py-2 px-4 rounded"
+                    class="px-4 py-2 m-2 font-bold text-white bg-orange-600 rounded hover:bg-orange-800"
                     on:click=move |_| {
                         let (program, timer) = generate_program(text());
                         parse_time.set(timer);
@@ -38,24 +38,24 @@ pub fn Runner(
                     "Run"
                 </button>
             </div>
-            <div class="flex flex-col">
+            <div class="flex flex-col w-full">
                 <EngineSelector engine_type eval vm />
-                <div class="font-bold text-xl m-2">"Lexing and Parsing took "{parse_time}" ms"</div>
+                <div class="m-2 text-xl font-bold">"Lexing and Parsing took "{parse_time}" ms"</div>
                 <Show when=move || {
                     matches!(engine_type(), EngineType::Both | EngineType::Evaluator)
                 }>
-                    <div class="font-bold text-xl m-2">
+                    <div class="m-2 text-xl font-bold">
                         "Evaluator result(took " {move || eval().time} " ms)"
                     </div>
-                    <pre class="m-2 p-4 bg-gray-100 rounded overflow-auto max-h-72">
+                    <pre class="overflow-auto p-4 m-2 max-h-72 bg-gray-100 rounded">
                         {move || eval().result}
                     </pre>
                 </Show>
                 <Show when=move || matches!(engine_type(), EngineType::Both | EngineType::VM)>
-                    <div class="font-bold text-xl m-2">
+                    <div class="m-2 text-xl font-bold">
                         "VM result (took " {move || vm().time} " ms)"
                     </div>
-                    <pre class="m-2 p-4 bg-gray-100 rounded overflow-auto max-h-72">
+                    <pre class="overflow-auto p-4 m-2 max-h-72 bg-gray-100 rounded">
                         {move || vm().result}
                     </pre>
                 </Show>

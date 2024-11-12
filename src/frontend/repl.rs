@@ -1,4 +1,4 @@
-use leptos::{logging, prelude::*, tachys::reactive_graph::bind};
+use leptos::{logging, prelude::*};
 use std::{fmt::Write, rc::Rc};
 
 use crate::{
@@ -13,7 +13,9 @@ use super::{utils::generate_program, EngineType};
 
 #[component]
 pub fn Repl(engine_type: RwSignal<EngineType>) -> impl IntoView {
-    let output = RwSignal::new(String::new());
+    let output = RwSignal::new(
+        "Welcome to the Monkey REPL! Press enter to evaluate an expression.\n\n".to_string(),
+    );
     let (input, input_set) = signal(String::new());
     if engine_type() == EngineType::Both {
         engine_type.set(EngineType::VM);
@@ -22,8 +24,8 @@ pub fn Repl(engine_type: RwSignal<EngineType>) -> impl IntoView {
     let mut ctx = vm::CompiledContext::default();
     let env = Rc::new(evaluator::Env::default());
     view! {
-        <EngineSelector engine_type />
-        <pre id="output" class="w-full h-4/5 font-mono">
+        <EngineSelector engine_type repl=output />
+        <pre id="output" class="w-full h-4/5 font-mono bg-gray-100">
             {output}
         </pre>
         <div class="flex flex-col">
@@ -35,7 +37,7 @@ pub fn Repl(engine_type: RwSignal<EngineType>) -> impl IntoView {
                     type="text"
                     id="input"
                     class="py-1 w-5/6 font-mono"
-                    placeholder="type an expression here"
+                    placeholder="enter an expression"
                     prop:value=input
                     on:input=move |ev| input_set(event_target_value(&ev))
                     on:keydown=move |e| {
@@ -50,7 +52,6 @@ pub fn Repl(engine_type: RwSignal<EngineType>) -> impl IntoView {
                                 }
                                 EngineType::Both => unreachable!(),
                             }
-                            //output.update(|s| s.write_fmt(format_args!("{}\n", input())).unwrap());
                             input_set(String::new());
                         }
                     }

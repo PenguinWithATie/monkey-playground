@@ -252,7 +252,7 @@ impl Compilation for Block {
     fn compile(&self, out: &mut CompiledContext) {
         for s in &self.0 {
             s.compile(out);
-            if !matches!(s, Expr::Return(_)) {
+            if !matches!(s, Expr::Return(_) | Expr::Let(_)) {
                 out.emit(Instruction::new(Op::Pop));
             }
         }
@@ -263,7 +263,7 @@ impl Compilation for Program {
     fn compile(&self, out: &mut CompiledContext) {
         for s in &self.statements {
             s.compile(out);
-            if !matches!(s, Expr::Return(_)) {
+            if !matches!(s, Expr::Return(_) | Expr::Let(_)) {
                 out.emit(Instruction::new(Op::Pop));
             }
         }

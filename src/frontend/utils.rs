@@ -10,7 +10,7 @@ use crate::monkey::{
 };
 
 use super::code_snips::*;
-const EVAL_STYLE: &str = "hover:text-white border border-green-700 hover:bg-green-800 focus:ring-4 focus:outline-none focus:ring-green-300 font-medium rounded-lg text-sm px-5 py-1.5 text-center me-2 mb-2";
+const EVAL_STYLE: &str = "hover:text-white border border-orange-500 hover:bg-orange-700 focus:ring-4 focus:outline-none focus:ring-orange-300 font-medium rounded-lg text-sm px-5 py-1.5 text-center me-2 mb-2";
 const SNIP_STYLE: &str = "bg-transparent hover:bg-blue-500 text-blue-700 font-semibold hover:text-white py-2 px-4 border border-blue-500 hover:border-transparent rounded";
 
 #[derive(Default, Clone)]
@@ -39,9 +39,9 @@ pub fn EngineSelector(
 ) -> impl IntoView {
     let eval_style = move |selected: EngineType| {
         if engine_type() == selected {
-            EVAL_STYLE.to_string() + " bg-green-800 text-white"
+            EVAL_STYLE.to_string() + " bg-orange-700 text-white"
         } else {
-            EVAL_STYLE.to_string() + " text-green-700"
+            EVAL_STYLE.to_string() + " text-orange-500"
         }
     };
     view! {
@@ -52,13 +52,16 @@ pub fn EngineSelector(
                 on:click=move |_| {
                     if engine_type() != EngineType::Evaluator {
                         if let Some(repl) = repl {
-                            repl.set("".to_string());
+                            repl.set(
+                                "Welcome to the Monkey REPL! Press enter to evaluate an expression.\n\n"
+                                    .to_string(),
+                            );
                         }
-                    engine_type.set(EngineType::Evaluator);
-                    if let Some(eval) = eval {
-                        eval.set(RunResult::default());
+                        engine_type.set(EngineType::Evaluator);
+                        if let Some(eval) = eval {
+                            eval.set(RunResult::default());
+                        }
                     }
-                }
                 }
             >
                 "Evaluator"
@@ -67,9 +70,20 @@ pub fn EngineSelector(
                 type="button"
                 class=move || eval_style(EngineType::VM)
                 on:click=move |_| {
-                    engine_type.set(EngineType::VM);
-                    if let Some(vm) = vm {
-                        vm.set(RunResult::default());
+                    if engine_type() != EngineType::VM {
+                        engine_type.set(EngineType::VM);
+                        if let Some(repl) = repl {
+                            repl.set(
+                                "Welcome to the Monkey REPL! Press enter to evaluate an expression.\n\n"
+                                    .to_string(),
+                            );
+                        }
+                        if let Some(vm) = vm {
+                            vm.set(RunResult::default());
+                        }
+                        if let Some(eval) = eval {
+                            eval.set(RunResult::default());
+                        }
                     }
                 }
             >
@@ -129,7 +143,7 @@ pub fn ModeSelector(mode: RwSignal<EvalMode>) -> impl IntoView {
                 }
             />
             <span class="mx-2 text-sm font-medium text-gray-900 ms-3">"Runner mode"</span>
-            <div class="relative w-9 h-5 bg-green-600 peer-focus:outline-none  rounded-full peer peer-checked:after:translate-x-full rtl:peer-checked:after:-translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:start-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-blue-600"></div>
+            <div class="relative w-9 h-5 bg-blue-600 peer-focus:outline-none  rounded-full peer peer-checked:after:translate-x-full rtl:peer-checked:after:-translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:start-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-green-600"></div>
             <span class="mx-2 text-sm font-medium text-gray-900 ms-3">"REPL mode (CLI)"</span>
         </label>
     }

@@ -4,7 +4,6 @@ mod monkey;
 use frontend::{EngineType, EvalMode, ModeSelector, Repl, Runner, SnippetSetter, FIB_CODE};
 
 fn main() {
-    console_error_panic_hook::set_once();
     mount_to_body(App);
 }
 
@@ -14,7 +13,7 @@ fn App() -> impl IntoView {
     let (text, set_text) = signal::<String>(FIB_CODE.to_string());
     let mode = RwSignal::new(EvalMode::Runner);
     view! {
-        <div class="m-4 flex gap-2">
+        <div class="flex gap-2 m-4">
             <ModeSelector mode />
             <Show when=move || mode() == EvalMode::Runner>
                 <SnippetSetter set_text />

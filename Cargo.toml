@@ -4,7 +4,6 @@ version = "0.1.0"
 edition = "2021"
 
 [dependencies]
-console_error_panic_hook = "0.1.7"
 leptos = { version = "0.7.0-rc1", features = ["csr", "nightly"] }
 chrono = { version = "0.4.38"}
 
@@ -13,3 +12,4 @@ inherits = "release"
 opt-level = 'z'
 lto = true
 codegen-units = 1
+
