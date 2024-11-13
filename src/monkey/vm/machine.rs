@@ -55,7 +55,7 @@ impl Default for Machine {
     fn default() -> Self {
         Self {
             sp: 0,
-            stack: vec![Binding::Null; 1234],
+            stack: vec![Binding::Null; u16::MAX as usize],
             globals: vec![Binding::Null; u16::MAX as usize],
             frames: Vec::new(),
             stdout: String::new(),
